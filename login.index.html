@@ -65,6 +65,7 @@
         success: function (obj) {
           if (obj.status == 'success') {
             alert("登录成功");
+            window.location.href="list_item.index.html";
           }else {
             alert("登录失败："+ obj.data.errMsg)
           }

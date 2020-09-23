@@ -47,6 +47,9 @@
 			<label class="control-label" id="sales"></label>
 		</div>
 	</div>
+	<div class="form-actions">
+		<button class="btn blue" id="create_order" type="submit">下单</button>
+	</div>
 </div>
 </body>
 <script>
@@ -87,6 +90,37 @@
         console.log(xhr);
       },
     });
+    $(document).on('click','#create_order',function (){//下单
+      // var itemId = $('#itemId')
+      $.ajax({
+        type: 'POST',
+        // contentType:'application/x-www-form-urlencoded',
+        url:'http://localhost:8090/order/createOrder' ,
+        data: {itemId:id,amount:1},
+        xhrFields: {withCredentials:true},	//前端适配：允许session跨域
+        crossDomain: true,
+        beforeSend: function (xhr) {
+        },
+        complete: function (obj) {
+
+        },
+        success: function (obj) {
+          if (obj.status == 'success') {
+            alert("下单成功")
+			window.location.reload();
+          }else {
+            alert("下单失败："+ obj.data.errMsg)
+			if (obj.data.errCode == 200003){
+			  window.location.href="login.index.html";
+			}
+          }
+        },
+        error: function (xhr) {
+          alert("下单失败");
+          console.log(xhr);
+        },
+      });
+	});
   });
 
 </script>

@@ -11,6 +11,12 @@
 <body class="login">
 <div class="content">
 	<h3 class="form-title">商品详情</h3>
+	<div class="form-group" id="promo_start_date_container">
+		<label class="control-label" style="color: blue;" id="promoStatus"></label>
+		<div>
+			<label style="color: red;" class="control-label" id="promo_start_date"></label>
+		</div>
+	</div>
 	<div class="form-group">
 		<label class="control-label">商品名</label>
 		<div>
@@ -23,10 +29,16 @@
 			<label class="control-label" id="description"></label>
 		</div>
 	</div>
-	<div class="form-group">
+	<div class="form-group normal-price">
 		<label class="control-label">价格</label>
 		<div>
 			<label class="control-label" id="price"></label>
+		</div>
+	</div>
+	<div class="form-group" id="promo_price_container">
+		<label class="control-label" style="color: red;">秒杀价格</label>
+		<div>
+			<label style="color: red;" class="control-label" id="promo_price"></label>
 		</div>
 	</div>
 	<div class="form-group">
@@ -53,7 +65,9 @@
 </div>
 </body>
 <script>
+  var OBJ = {};
   $(document).ready(function(){
+
     function GetQueryString(name)
     {
       var reg = new RegExp("(^|&)"+ name +"=([^&]*)(&|$)");
@@ -74,13 +88,10 @@
 
       },
       success: function (obj) {
+        OBJ = obj;
         if (obj.status == 'success') {
-          $('#title').html(obj.data.title);
-          $('#description').html(obj.data.description);
-          $('#price').html(obj.data.price);
-          $('#imgUrl').attr("src",obj.data.imgUrl);
-          $('#stock').html(obj.data.stock);
-          $('#sales').html(obj.data.sales);
+          reloadDom();
+          window.setInterval('reloadDom()',1000);
         }else {
           alert("获取数据失败："+ obj.data.errMsg)
         }
@@ -91,12 +102,11 @@
       },
     });
     $(document).on('click','#create_order',function (){//下单
-      // var itemId = $('#itemId')
       $.ajax({
         type: 'POST',
         // contentType:'application/x-www-form-urlencoded',
         url:'http://localhost:8090/order/createOrder' ,
-        data: {itemId:id,amount:1},
+        data: {itemId:id,amount:1,promoId:OBJ.data.promoID},
         xhrFields: {withCredentials:true},	//前端适配：允许session跨域
         crossDomain: true,
         beforeSend: function (xhr) {
@@ -122,6 +132,34 @@
       });
 	});
   });
-
+  function reloadDom(){
+    $('#title').html(OBJ.data.title);
+    $('#description').html(OBJ.data.description);
+    $('#price').html(OBJ.data.price);
+    $('#imgUrl').attr("src",OBJ.data.imgUrl);
+    $('#stock').html(OBJ.data.stock);
+    $('#sales').html(OBJ.data.sales);
+    if(OBJ.data.promoStatus == 1){//未开始
+      OBJ.data.startDate.replace(new RegExp("-","gm"),"/");
+      var nowTime = Date.parse(new Date()), startTime = OBJ.data.startDate;
+      startTime = (new Date(startTime)).getTime();
+      var delta = (startTime - nowTime)/1000;
+      if (delta <= 0){
+        OBJ.data.promoStatus = 2;
+        reloadDom();
+      }
+      $('#promo_start_date').html('活动将于：'+OBJ.data.startDate+'开始 倒计时：'+ delta);
+      $('#promo_start_date_container').show()
+      $('#promo_price').html(OBJ.data.promoPrice)
+      $('#create_order').attr('disabled',true);
+      $('.normal-price').show();
+    }else if (OBJ.data.promoStatus == 2){
+      $('#promo_start_date').html("秒杀正在进行中");
+      $('#promo_start_date_container').show()
+      $('#promo_price').html(OBJ.data.promoPrice)
+      $('#create_order').attr('disabled',false);
+      $('.normal-price').hide();
+    }
+  }
 </script>
 </html>
